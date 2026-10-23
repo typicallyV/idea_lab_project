@@ -37,8 +37,11 @@ from typing import List, Tuple
 from config import (
     FAISS_INDEX_DIR,
     OPENAI_EMBEDDING_MODEL,
+    GEMINI_EMBEDDING_MODEL,
+    GEMINI_EMBEDDING_DIMENSIONS,
     SENTENCE_TRANSFORMER_MODEL,
     USE_OPENAI_EMBEDDINGS,
+    USE_GEMINI_EMBEDDINGS,
 )
 from core.embeddings import embed_texts
 from utils.file_utils import validate_document_id
@@ -68,8 +71,12 @@ def _model_metadata_path(document_id: str) -> str:
 
 
 def _active_embedding_model() -> str:
+    if USE_OPENAI_EMBEDDINGS and USE_GEMINI_EMBEDDINGS:
+        raise RuntimeError("Choose only one remote embedding provider: OpenAI or Gemini.")
     if USE_OPENAI_EMBEDDINGS:
         return f"openai:{OPENAI_EMBEDDING_MODEL}"
+    if USE_GEMINI_EMBEDDINGS:
+        return f"gemini:{GEMINI_EMBEDDING_MODEL}:{GEMINI_EMBEDDING_DIMENSIONS}"
     return f"sentence-transformers:{SENTENCE_TRANSFORMER_MODEL}"
 
 

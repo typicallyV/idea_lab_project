@@ -24,7 +24,7 @@ Built for hackathon speed — **explicit, modular, and extremely easy to debug**
           │  ├── document_parser.py  │  parse PDF/DOCX
           │  ├── text_cleaner.py     │  clean noise
           │  ├── chunker.py          │  sliding-window split
-          │  ├── embeddings.py       │  SentenceTransformers / OpenAI
+          │  ├── embeddings.py       │  SentenceTransformers / OpenAI / Gemini
           │  ├── vector_store.py     │  FAISS (per-document index)
           │  ├── retriever.py        │  cosine similarity search
           │  └── severity_scoring.py │  rule-based 0–100 score
@@ -39,7 +39,7 @@ Built for hackathon speed — **explicit, modular, and extremely easy to debug**
 
 - Python 3.11+
 - An **Anthropic API key** (Claude)
-- _(Optional)_ An OpenAI API key (for higher-quality embeddings)
+- _(Optional)_ An OpenAI or Gemini API key for hosted embeddings; Gemini uses the existing `GEMINI_API_KEY`.
 
 ### 2. Set up a virtual environment
 
@@ -203,7 +203,8 @@ All settings live in `.env` (copy from `.env.example`):
 |-----------------------------|-----------------------------|----------------------------------------------------|
 | `ANTHROPIC_API_KEY`         | *(required)*                | Your Anthropic Claude API key                      |
 | `CLAUDE_MODEL`              | `claude-3-5-sonnet-20241022`| Claude model version                               |
-| `USE_OPENAI_EMBEDDINGS`     | `false`                     | Use OpenAI instead of SentenceTransformers         |
+| `USE_OPENAI_EMBEDDINGS`     | `false`                     | Use OpenAI embeddings (requires `OPENAI_API_KEY`)  |
+| `USE_GEMINI_EMBEDDINGS`     | `false`                     | Use Gemini embeddings (requires `GEMINI_API_KEY`); select only one remote provider |
 | `OPENAI_API_KEY`            | *(optional)*                | OpenAI key (only needed if above is `true`)        |
 | `SENTENCE_TRANSFORMER_MODEL`| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Local multilingual embeddings for English and Hindi |
 | `FAISS_INDEX_DIR`           | `./faiss_indexes`           | Where FAISS indexes are stored                     |

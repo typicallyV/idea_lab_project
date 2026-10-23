@@ -3,14 +3,15 @@ core/embeddings.py
 ------------------
 Generates vector embeddings for text chunks.
 
-Two backends are supported (switch via config.py):
-  1. OpenAI text-embedding-3-small  (USE_OPENAI_EMBEDDINGS=true)
-  2. Multilingual SentenceTransformers model (default, fully local after download)
+Three backends are supported (switch via config.py):
+  1. OpenAI text-embedding-3-small (USE_OPENAI_EMBEDDINGS=true)
+  2. Gemini embedding-2 (USE_GEMINI_EMBEDDINGS=true)
+  3. Multilingual SentenceTransformers model (default, local after download)
 
-WHY TWO BACKENDS?
------------------
-SentenceTransformers runs offline — great for hackathons with no API budget.
-OpenAI embeddings are higher quality for production.
+WHY THREE BACKENDS?
+-------------------
+SentenceTransformers runs offline but needs substantial memory to load.
+OpenAI and Gemini embeddings call their respective hosted APIs.
 The abstraction is a single function: embed_texts(texts) -> np.ndarray
 so the rest of the codebase never cares which backend is active.
 """
@@ -19,8 +20,12 @@ from typing import List
 import numpy as np
 from config import (
     USE_OPENAI_EMBEDDINGS,
+    USE_GEMINI_EMBEDDINGS,
     OPENAI_API_KEY,
     OPENAI_EMBEDDING_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_EMBEDDING_MODEL,
+    GEMINI_EMBEDDING_DIMENSIONS,
     SENTENCE_TRANSFORMER_MODEL,
 )
 from logger import get_logger
@@ -63,16 +68,19 @@ def embed_texts(texts: List[str]) -> np.ndarray:
         Each row is the embedding vector for the corresponding text.
 
     Raises:
-        RuntimeError: If the embedding backend fails.
+        RuntimeError: If the selected embedding backend fails or is misconfigured.
     """
     if not texts:
         logger.warning("embed_texts called with empty list — returning empty array")
         return np.array([])
 
+    if USE_OPENAI_EMBEDDINGS and USE_GEMINI_EMBEDDINGS:
+        raise RuntimeError("Choose only one remote embedding provider: OpenAI or Gemini.")
     if USE_OPENAI_EMBEDDINGS:
         return _embed_with_openai(texts)
-    else:
-        return _embed_with_sentence_transformers(texts)
+    if USE_GEMINI_EMBEDDINGS:
+        return _embed_with_gemini(texts, is_query=False)
+    return _embed_with_sentence_transformers(texts)
 
 
 def embed_query(query: str) -> np.ndarray:
@@ -82,6 +90,10 @@ def embed_query(query: str) -> np.ndarray:
     Returns:
         1-D NumPy array (embedding vector).
     """
+    if USE_GEMINI_EMBEDDINGS:
+        if USE_OPENAI_EMBEDDINGS:
+            raise RuntimeError("Choose only one remote embedding provider: OpenAI or Gemini.")
+        return _embed_with_gemini([query], is_query=True)[0]
     result = embed_texts([query])
     return result[0]
 
@@ -112,7 +124,7 @@ def _embed_with_openai(texts: List[str]) -> np.ndarray:
     if not OPENAI_API_KEY:
         raise RuntimeError(
             "OPENAI_API_KEY is not set. "
-            "Either set the key or set USE_OPENAI_EMBEDDINGS=false to use SentenceTransformers."
+            "Add the key or choose Gemini/local embeddings."
         )
 
     import openai
@@ -128,4 +140,69 @@ def _embed_with_openai(texts: List[str]) -> np.ndarray:
     # Extract embedding vectors in the correct order
     embeddings = np.array([item.embedding for item in response.data])
     logger.info(f"Embeddings generated — shape: {embeddings.shape}")
+    return embeddings
+
+
+def _embed_with_gemini(texts: List[str], *, is_query: bool) -> np.ndarray:
+    """Use Gemini's hosted embedding API without loading a local ML model."""
+    if not GEMINI_API_KEY:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not set. Add it to the RAG service environment "
+            "or choose another embedding provider."
+        )
+
+    import httpx
+
+    if is_query:
+        contents = [f"task: question answering | query: {text}" for text in texts]
+    else:
+        contents = [f"title: none | text: {text}" for text in texts]
+
+    requests = [
+        {
+            "model": f"models/{GEMINI_EMBEDDING_MODEL}",
+            "content": {"parts": [{"text": content}]},
+            "output_dimensionality": GEMINI_EMBEDDING_DIMENSIONS,
+        }
+        for content in contents
+    ]
+
+    logger.info(
+        f"Generating embeddings for {len(texts)} texts via Gemini "
+        f"({GEMINI_EMBEDDING_MODEL}, {GEMINI_EMBEDDING_DIMENSIONS} dimensions)"
+    )
+    endpoint = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{GEMINI_EMBEDDING_MODEL}:batchEmbedContents"
+    )
+    vectors = []
+    try:
+        # Keep requests comfortably sized so large documents do not exceed
+        # the embedding endpoint's per-request limits.
+        for start in range(0, len(requests), 32):
+            response = httpx.post(
+                endpoint,
+                headers={"x-goog-api-key": GEMINI_API_KEY},
+                json={"requests": requests[start : start + 32]},
+                timeout=60.0,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            vectors.extend(item["values"] for item in payload["embeddings"])
+        embeddings = np.asarray(vectors, dtype=np.float32)
+    except httpx.HTTPStatusError as exc:
+        detail = exc.response.text[:500]
+        raise RuntimeError(
+            f"Gemini embeddings request failed ({exc.response.status_code}): {detail}"
+        ) from exc
+    except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError(f"Gemini embeddings request failed: {exc}") from exc
+
+    expected_shape = (len(texts), GEMINI_EMBEDDING_DIMENSIONS)
+    if embeddings.shape != expected_shape:
+        raise RuntimeError(
+            "Gemini returned an unexpected embedding shape: "
+            f"{embeddings.shape}; expected {expected_shape}."
+        )
+    logger.info(f"Gemini embeddings generated — shape: {embeddings.shape}")
     return embeddings

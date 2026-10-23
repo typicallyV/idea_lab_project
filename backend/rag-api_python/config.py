@@ -33,6 +33,9 @@ OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 USE_OPENAI_EMBEDDINGS: bool = os.getenv("USE_OPENAI_EMBEDDINGS", "false").lower() == "true"
 OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+USE_GEMINI_EMBEDDINGS: bool = os.getenv("USE_GEMINI_EMBEDDINGS", "false").lower() == "true"
+GEMINI_EMBEDDING_MODEL: str = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
+GEMINI_EMBEDDING_DIMENSIONS: int = int(os.getenv("GEMINI_EMBEDDING_DIMENSIONS", "768"))
 
 # ---------------------------------------------------------------------------
 # SentenceTransformers (fallback when OpenAI embeddings are disabled)

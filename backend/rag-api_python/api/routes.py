@@ -24,6 +24,7 @@ from config import (
     OPENAI_API_KEY,
     GEMINI_API_KEY,
     USE_OPENAI_EMBEDDINGS,
+    USE_GEMINI_EMBEDDINGS,
 )
 from logger import get_logger
 
@@ -260,11 +261,21 @@ async def health_check():
         healthy = False
 
     # --- Embeddings config consistency ---
-    if USE_OPENAI_EMBEDDINGS and not OPENAI_API_KEY:
+    if USE_OPENAI_EMBEDDINGS and USE_GEMINI_EMBEDDINGS:
+        checks["embedding_backend"] = "error: choose only one remote embedding provider"
+        healthy = False
+    elif USE_OPENAI_EMBEDDINGS and not OPENAI_API_KEY:
         checks["embedding_backend"] = "error: USE_OPENAI_EMBEDDINGS=true but OPENAI_API_KEY is missing"
         healthy = False
+    elif USE_GEMINI_EMBEDDINGS and not GEMINI_API_KEY:
+        checks["embedding_backend"] = "error: USE_GEMINI_EMBEDDINGS=true but GEMINI_API_KEY is missing"
+        healthy = False
     else:
-        checks["embedding_backend"] = "openai" if USE_OPENAI_EMBEDDINGS else "sentence-transformers (local)"
+        checks["embedding_backend"] = (
+            "openai" if USE_OPENAI_EMBEDDINGS else
+            "gemini" if USE_GEMINI_EMBEDDINGS else
+            "sentence-transformers (local)"
+        )
 
     # --- Cheap informational stats (registry is an in-memory dict, no I/O cost) ---
     try:
