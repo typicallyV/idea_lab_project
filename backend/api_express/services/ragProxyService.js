@@ -6,6 +6,9 @@ const logger = require('../utils/logger');
 
 const RAW_URL = process.env.RAG_SERVICE_URL;
 const RAG_BASE_URL = RAW_URL.endsWith('/') ? RAW_URL.slice(0, -1) : RAW_URL;
+const INTERNAL_API_HEADERS = process.env.INTERNAL_API_KEY
+  ? { 'x-internal-api-key': process.env.INTERNAL_API_KEY }
+  : {};
 
 /**
  * Ensures that a document is indexed in the RAG service.
@@ -14,7 +17,9 @@ const RAG_BASE_URL = RAW_URL.endsWith('/') ? RAW_URL.slice(0, -1) : RAW_URL;
  */
 const ensureDocumentIndexed = async (documentId) => {
   try {
-    const checkResponse = await fetch(`${RAG_BASE_URL}/documents/${documentId}`);
+    const checkResponse = await fetch(`${RAG_BASE_URL}/documents/${documentId}`, {
+      headers: INTERNAL_API_HEADERS,
+    });
     if (checkResponse.ok) {
       // Document is already indexed!
       return;
@@ -57,7 +62,7 @@ const ensureDocumentIndexed = async (documentId) => {
       const ingestResponse = await fetch(`${RAG_BASE_URL}/ingest`, {
         method: 'POST',
         body: form,
-        headers: form.getHeaders()
+        headers: { ...form.getHeaders(), ...INTERNAL_API_HEADERS }
       });
 
       if (!ingestResponse.ok) {
@@ -95,7 +100,7 @@ const ingestDocument = async (fileBuffer, originalName, documentId = null) => {
   const response = await fetch(`${RAG_BASE_URL}/ingest`, {
     method: 'POST',
     body: form,
-    headers: form.getHeaders()
+    headers: { ...form.getHeaders(), ...INTERNAL_API_HEADERS }
   });
 
   if (!response.ok) {
@@ -122,7 +127,7 @@ const analyzeDocument = async (documentId, query = 'Summarise this legal documen
 
   const response = await fetch(`${RAG_BASE_URL}/analyze`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...INTERNAL_API_HEADERS },
     body: JSON.stringify({ document_id: documentId, query })
   });
 
@@ -151,7 +156,7 @@ const chatWithDocument = async (documentId, question, responseLanguage = 'auto')
 
   const response = await fetch(`${RAG_BASE_URL}/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...INTERNAL_API_HEADERS },
     body: JSON.stringify({ document_id: documentId, question, response_language: responseLanguage })
   });
 

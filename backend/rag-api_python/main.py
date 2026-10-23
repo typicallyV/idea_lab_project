@@ -1,6 +1,8 @@
 import os
+import hmac
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from api.routes import router
 from config import APP_TITLE, APP_VERSION, APP_DESCRIPTION, FAISS_INDEX_DIR, UPLOAD_DIR
@@ -21,6 +23,28 @@ def create_app() -> FastAPI:
         docs_url="/docs",        # Swagger UI at http://localhost:8000/docs
         redoc_url="/redoc",      # ReDoc UI at http://localhost:8000/redoc
     )
+
+    @app.middleware("http")
+    async def protect_public_rag_service(request: Request, call_next):
+        # Render Free services have public URLs. Keep health probes public, but
+        # require the Express service's shared secret for every RAG operation.
+        if request.url.path == "/health" or request.method == "OPTIONS":
+            return await call_next(request)
+
+        expected_key = os.environ.get("INTERNAL_API_KEY", "")
+        if not expected_key:
+            if os.environ.get("ENVIRONMENT", "development").lower() == "production":
+                return JSONResponse(
+                    status_code=503,
+                    content={"detail": "RAG service internal API key is not configured"},
+                )
+            return await call_next(request)
+
+        supplied_key = request.headers.get("x-internal-api-key", "")
+        if not hmac.compare_digest(supplied_key, expected_key):
+            return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+
+        return await call_next(request)
 
 
     # first check if master backend is defined
