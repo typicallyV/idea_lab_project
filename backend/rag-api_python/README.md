@@ -205,7 +205,7 @@ All settings live in `.env` (copy from `.env.example`):
 | `CLAUDE_MODEL`              | `claude-3-5-sonnet-20241022`| Claude model version                               |
 | `USE_OPENAI_EMBEDDINGS`     | `false`                     | Use OpenAI instead of SentenceTransformers         |
 | `OPENAI_API_KEY`            | *(optional)*                | OpenAI key (only needed if above is `true`)        |
-| `SENTENCE_TRANSFORMER_MODEL`| `all-MiniLM-L6-v2`         | Local embedding model name                         |
+| `SENTENCE_TRANSFORMER_MODEL`| `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Local multilingual embeddings for English and Hindi |
 | `FAISS_INDEX_DIR`           | `./faiss_indexes`           | Where FAISS indexes are stored                     |
 | `UPLOAD_DIR`                | `./uploaded_files`          | Temporary upload directory                         |
 | `CHUNK_SIZE`                | `500`                       | Characters per chunk                               |
@@ -298,7 +298,7 @@ rag_service/
 → Create a `.env` file from `.env.example` and set your key.
 
 **First run is slow**
-→ SentenceTransformer model (`all-MiniLM-L6-v2`, ~90 MB) is downloading. This only happens once.
+→ The configured multilingual SentenceTransformer model is downloading on first use. This only happens once.
 
 ---
 

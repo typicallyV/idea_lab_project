@@ -76,14 +76,14 @@ const analyzeDoc = async (userId, documentId, query) => {
 /**
  * Chat interactively with a document via the RAG microservice.
  */
-const chatWithDoc = async (userId, documentId, question) => {
+const chatWithDoc = async (userId, documentId, question, responseLanguage = "auto") => {
   if (!documentId || !question) {
     throw new AppError("document_id and question are both required.", 400);
   }
 
   let result;
   try {
-    result = await chatWithDocument(documentId, question);
+    result = await chatWithDocument(documentId, question, responseLanguage);
   } catch (error) {
     if (error.message === "DOCUMENT_INDEX_EXPIRED") {
       throw new AppError(

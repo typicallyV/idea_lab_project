@@ -31,6 +31,11 @@ export function ChatPanel({
   // While listening, the textarea mirrors the live transcript directly
   // instead of syncing it into `input` via an effect.
   const displayValue = isListening ? transcript : input;
+  const inputPlaceholder = isListening
+    ? language === "hi-IN" ? "सुन रहा है..." : "Listening..."
+    : language === "hi-IN"
+      ? "अपने दस्तावेज़ के बारे में सवाल पूछें..."
+      : "Ask a question about your document...";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,7 +59,7 @@ export function ChatPanel({
     const text = isListening ? transcript : input;
     if (!text.trim()) return;
     if (isListening) stopListening();
-    sendMessage(text);
+    sendMessage(text, language === "hi-IN" ? "hi" : "auto");
     setInput("");
   };
 
@@ -76,6 +81,7 @@ export function ChatPanel({
               <button
                 key={l.code}
                 onClick={() => setLanguage(l.code)}
+                aria-pressed={language === l.code}
                 className={cn(
                   "rounded px-2 py-1 font-medium transition-colors",
                   language === l.code
@@ -87,6 +93,26 @@ export function ChatPanel({
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {compact && (
+        <div className="mb-2 flex justify-end gap-1 text-xs">
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.code}
+              onClick={() => setLanguage(l.code)}
+              aria-pressed={language === l.code}
+              className={cn(
+                "rounded px-2 py-1 font-medium transition-colors",
+                language === l.code
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {l.label}
+            </button>
+          ))}
         </div>
       )}
 
@@ -171,7 +197,7 @@ export function ChatPanel({
               handleSend();
             }
           }}
-          placeholder={isListening ? "Listening..." : "Ask a question about your document..."}
+          placeholder={inputPlaceholder}
           rows={1}
           className="max-h-32 min-h-10 flex-1 resize-none border-none bg-transparent shadow-none focus-visible:ring-0"
         />

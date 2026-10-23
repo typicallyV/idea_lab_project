@@ -7,6 +7,7 @@ Keeping request and response models separate makes it easy to version
 the API later without touching business logic.
 """
 
+from typing import Literal
 from pydantic import BaseModel, Field
 
 # document_id is used directly to build FAISS index file paths
@@ -46,4 +47,8 @@ class ChatRequest(BaseModel):
         ...,
         description="The user's question about the document.",
         example="What is the deadline mentioned in this notice?",
+    )
+    response_language: Literal["auto", "hi"] = Field(
+        default="auto",
+        description="Answer in the question's language, or force Hindi when set to 'hi'.",
     )

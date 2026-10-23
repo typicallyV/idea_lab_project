@@ -64,7 +64,7 @@ def _get_gemini_model():
         try:
             import google.generativeai as genai
             from google.generativeai.types import HarmCategory, HarmBlockThreshold
-            genai.configure(api_key=GEMINI_API_KEY)
+            genai.configure(api_key=GEMINI_API_KEY, transport="rest")
             _gemini_model = genai.GenerativeModel(
                 model_name=GEMINI_MODEL,
                 safety_settings={

@@ -3,14 +3,17 @@ import { unwrap } from "@/lib/api-envelope";
 import type { ChatResponse } from "@/types/chat";
 
 /**
- * The backend's /api/chat/chat handler only reads { document_id, question }
- * (see backend/controllers/chatController.js) — format/language/session_id
- * are not forwarded to the AI, so we don't send fields the API ignores.
+ * Send an optional answer-language preference through the API gateway to RAG.
  */
-export async function askDocument(documentId: string, question: string): Promise<ChatResponse> {
+export async function askDocument(
+  documentId: string,
+  question: string,
+  responseLanguage: "auto" | "hi" = "auto",
+): Promise<ChatResponse> {
   const res = await apiClient.post("/api/chat/chat", {
     document_id: documentId,
     question,
+    response_language: responseLanguage,
   });
   return unwrap(res);
 }

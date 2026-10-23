@@ -43,31 +43,31 @@ SEVERITY_RULES: List[Tuple[int, str, str, str]] = [
         40,
         "Lawsuit / litigation",
         "legal_action",
-        r"\b(lawsuit|litigation|legal\s+action|sue|sued|court|plaintiff|defendant|claim|complaint|summons|subpoena)\b",
+        r"\b(lawsuit|litigation|legal\s+action|sue|sued|court|plaintiff|defendant|claim|complaint|summons|subpoena)\b|मुकदमा|वाद|न्यायालय|अदालत|अभियोग|समन",
     ),
     (
         20,
         "Deadline / due date",
         "deadline",
-        r"\b(deadline|due\s+date|by\s+\w+\s+\d{1,2}|within\s+\d+\s+days?|respond\s+within|expire[sd]?|time\s+limit)\b",
+        r"\b(deadline|due\s+date|by\s+\w+\s+\d{1,2}|within\s+\d+\s+days?|respond\s+within|expire[sd]?|time\s+limit)\b|समय\s*सीमा|अंतिम\s+तिथि|दिनों\s+के\s+भीतर|के\s+भीतर\s+दिन",
     ),
     (
         15,
         "Monetary demand",
         "financial",
-        r"(\$[\d,]+|\b\d[\d,]*\s*(dollars?|USD|damages?|compensation|penalty|penalties|fine[sd]?|award))",
+        r"(\$[\d,]+|₹\s?[\d,]+|\b\d[\d,]*\s*(dollars?|USD|damages?|compensation|penalty|penalties|fine[sd]?|award)|रुपये|रुपया|जुर्माना|क्षतिपूर्ति|मुआवजा|हर्जाना|दंड|बकाया)",
     ),
     (
         10,
         "Copyright / DMCA strike",
         "ip",
-        r"\b(copyright|DMCA|intellectual\s+property|trademark|infringement|infringe[sd]?|cease\s+and\s+desist)\b",
+        r"\b(copyright|DMCA|intellectual\s+property|trademark|infringement|infringe[sd]?|cease\s+and\s+desist)\b|कॉपीराइट|प्रतिलिपि\s+अधिकार|ट्रेडमार्क|उल्लंघन|बौद्धिक\s+संपदा",
     ),
     (
         5,
         "Warning notice",
         "notice",
-        r"\b(warning|notice|notify|notification|hereby\s+informed|be\s+advised|formal\s+notice)\b",
+        r"\b(warning|notice|notify|notification|hereby\s+informed|be\s+advised|formal\s+notice)\b|चेतावनी|नोटिस|सूचना|अधिसूचना|सूचित\s+किया\s+जाता",
     ),
 ]
 
@@ -76,13 +76,13 @@ SEVERITY_RULES: List[Tuple[int, str, str, str]] = [
 # Document type detection patterns
 # ---------------------------------------------------------------------------
 DOCUMENT_TYPE_PATTERNS = [
-    (r"\b(copyright|DMCA|content\s+ID|community\s+guideline|strike)\b", "Copyright / DMCA Strike"),
-    (r"\b(cease\s+and\s+desist)\b", "Cease and Desist"),
-    (r"\b(summons|subpoena|court\s+order|appear\s+before)\b", "Court Summons"),
-    (r"\b(contract|agreement|terms|clause|party|parties)\b", "Contract / Agreement"),
-    (r"\b(lease|tenant|landlord|rent|eviction)\b", "Lease / Rental Notice"),
-    (r"\b(invoice|payment|overdue|outstanding\s+balance)\b", "Payment Demand"),
-    (r"\b(termination|fired|employment|severance)\b", "Employment Notice"),
+    (r"\b(copyright|DMCA|content\s+ID|community\s+guideline|strike)\b|कॉपीराइट|ट्रेडमार्क", "Copyright / DMCA Strike"),
+    (r"\b(cease\s+and\s+desist)\b|रोकने\s+का\s+नोटिस", "Cease and Desist"),
+    (r"\b(summons|subpoena|court\s+order|appear\s+before)\b|समन|अदालत\s+का\s+आदेश", "Court Summons"),
+    (r"\b(contract|agreement|terms|clause|party|parties)\b|अनुबंध|समझौता|धारा|पक्षकार", "Contract / Agreement"),
+    (r"\b(lease|tenant|landlord|rent|eviction)\b|किरायेदार|मकान\s+मालिक|किराया|बेदखली", "Lease / Rental Notice"),
+    (r"\b(invoice|payment|overdue|outstanding\s+balance)\b|भुगतान|बकाया|चालान", "Payment Demand"),
+    (r"\b(termination|fired|employment|severance)\b|नौकरी|रोजगार|बर्खास्तगी|सेवा\s+समाप्ति", "Employment Notice"),
 ]
 
 

@@ -26,6 +26,10 @@ const validateChat = (req, res, next) => {
     return res.status(400).json(formatResponse(false, null, "Invalid response style. Must be 'brief', 'detailed', or 'bullet_points'."));
   }
 
+  if (req.body.response_language && !['auto', 'hi'].includes(req.body.response_language)) {
+    return res.status(400).json(formatResponse(false, null, "Invalid response language. Must be 'auto' or 'hi'."));
+  }
+
   next();
 };
 

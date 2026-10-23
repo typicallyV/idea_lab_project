@@ -14,6 +14,10 @@ Usage:
 
 import pdfplumber
 from docx import Document as DocxDocument
+from docx.oxml.table import CT_Tbl
+from docx.oxml.text.paragraph import CT_P
+from docx.table import Table
+from docx.text.paragraph import Paragraph
 from logger import get_logger
 
 logger = get_logger(__name__)
@@ -76,7 +80,18 @@ def parse_docx(file_path: str) -> str:
     logger.info(f"Parsing DOCX: {file_path}")
     doc = DocxDocument(file_path)
 
-    paragraphs = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
+    paragraphs = []
+    for block in doc.element.body.iterchildren():
+        if isinstance(block, CT_P):
+            text = Paragraph(block, doc).text.strip()
+            if text:
+                paragraphs.append(text)
+        elif isinstance(block, CT_Tbl):
+            table = Table(block, doc)
+            for row in table.rows:
+                cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                if cells:
+                    paragraphs.append(" | ".join(cells))
 
     if not paragraphs:
         raise ValueError("No readable text paragraphs found in the DOCX file.")

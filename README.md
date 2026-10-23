@@ -28,7 +28,7 @@ Unlike generic chatbots prone to hallucinations, LiveLegal AI guarantees strictl
 
 - 🔍 **Isolated Per-Document FAISS Vector Storage**
   - Each uploaded legal document maintains its own dedicated vector index, preventing cross-tenant document bleeding and maintaining surgical precision.
-  - Sliding-window chunking (500 tokens with 50-token overlap) with normalized vector embeddings (HuggingFace `all-MiniLM-L6-v2` or OpenAI `text-embedding-3-small`).
+  - Sliding-window chunking (500 tokens with 50-token overlap) with normalized multilingual vector embeddings for English and Hindi (HuggingFace `paraphrase-multilingual-MiniLM-L12-v2` or OpenAI `text-embedding-3-small`).
 
 -  **Heuristic & LLM Legal Severity Scoring (0–100)**
   - Rule-based risk engine that flags indemnification clauses, uncapped liabilities, non-compete traps, jurisdiction vulnerabilities, and termination penalties.
@@ -161,7 +161,7 @@ LiveLegalAI/
 | **Frontend** | [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [TypeScript 5](https://www.typescriptlang.org/), [Tailwind CSS v4](https://tailwindcss.com/), [NextAuth.js](https://next-auth.js.org/), [Framer Motion](https://www.framer.com/motion/), [Sonner](https://sonner.emilkowal.ski/) |
 | **API Gateway** | [Node.js 20](https://nodejs.org/), [Express.js 4](https://expressjs.com/), [Mongoose 9](https://mongoosejs.com/), [JWT](https://jwt.io/), [PDFKit](https://pdfkit.org/), [Winston](https://github.com/winstonjs/winston), [Helmet](https://helmetjs.github.io/) |
 | **RAG Microservice** | [Python 3.11+](https://www.python.org/), [FastAPI](https://fastapi.tiangolo.com/), [Uvicorn](https://www.uvicorn.org/), [Pydantic v2](https://docs.pydantic.dev/) |
-| **AI / NLP & Vectors** | [Anthropic Claude 3.5 Sonnet](https://www.anthropic.com/), [OpenAI GPT-4o](https://openai.com/), [Google Gemini](https://ai.google.dev/), [SentenceTransformers](https://www.sbert.net/) (`all-MiniLM-L6-v2`), [Meta FAISS](https://github.com/facebookresearch/faiss) |
+| **AI / NLP & Vectors** | [Anthropic Claude 3.5 Sonnet](https://www.anthropic.com/), [OpenAI GPT-4o](https://openai.com/), [Google Gemini](https://ai.google.dev/), [SentenceTransformers](https://www.sbert.net/) (`paraphrase-multilingual-MiniLM-L12-v2`), [Meta FAISS](https://github.com/facebookresearch/faiss) |
 | **Database & Storage** | [MongoDB Atlas](https://www.mongodb.com/atlas), [Cloudinary](https://cloudinary.com/) (Document storage) |
 | **DevOps & Proxy** | [Docker](https://www.docker.com/), [Docker Compose v2](https://docs.docker.com/compose/), [Caddy v2](https://caddyserver.com/) (Automatic Let's Encrypt SSL/TLS) |
 

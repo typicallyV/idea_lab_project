@@ -5,7 +5,7 @@ Generates vector embeddings for text chunks.
 
 Two backends are supported (switch via config.py):
   1. OpenAI text-embedding-3-small  (USE_OPENAI_EMBEDDINGS=true)
-  2. SentenceTransformers all-MiniLM-L6-v2  (default, fully local, free)
+  2. Multilingual SentenceTransformers model (default, fully local after download)
 
 WHY TWO BACKENDS?
 -----------------

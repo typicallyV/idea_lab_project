@@ -25,6 +25,7 @@ PIPELINE FUNCTIONS
 """
 
 from core.llm_provider import call_llm
+from core.language import contains_devanagari
 from core.document_parser import parse_document
 from core.text_cleaner import clean_text
 from core.chunker import split_into_chunks
@@ -140,13 +141,18 @@ def run_analyze_pipeline(document_id: str, query: str) -> AnalyzeResponse:
         f"Severity: {severity_score}/100 ({risk_level}). "
         + (f"Risk factors detected: {', '.join(triggered_rules)}." if triggered_rules else "No major risk factors detected.")
     )
+    output_language = (
+        "Hindi, written in Devanagari script"
+        if contains_devanagari(combined_text)
+        else "English"
+    )
 
     # Step 3: Call LLM for structured analysis
     logger.info("Step 3/3 — Sending context to LLM for analysis")
 
     system_prompt = (
         "You are a legal assistant helping ordinary people understand legal documents.\n"
-        "Your job is to explain legal documents in simple, plain English.\n"
+        f"Your job is to explain legal documents in simple language. Write all section content in {output_language}.\n"
         "CRITICAL RULES:\n"
         "  - NEVER invent legal facts or make up details not present in the document.\n"
         "  - ONLY use information from the provided document excerpts.\n"
@@ -155,10 +161,10 @@ def run_analyze_pipeline(document_id: str, query: str) -> AnalyzeResponse:
     )
 
     user_prompt = f"""You have been given excerpts from a legal document.
-Please provide a structured analysis with EXACTLY these three sections, clearly labeled:
+Please provide a structured analysis with EXACTLY these three section labels. Keep the labels in English and write their content in {output_language}:
 
 SUMMARY:
-Write a 2-3 sentence plain-English summary of what this document is about and what it requires of the recipient.
+Write a 2-3 sentence plain-language summary of what this document is about and what it requires of the recipient.
 
 EXPLANATION:
 Explain the key legal obligations, rights, and implications for the recipient. Use simple language. No legal jargon.
@@ -238,7 +244,11 @@ def _parse_analyze_response(text: str) -> tuple:
 # PIPELINE 3: /chat
 # ===========================================================================
 
-def run_chat_pipeline(document_id: str, question: str) -> ChatResponse:
+def run_chat_pipeline(
+    document_id: str,
+    question: str,
+    response_language: str = "auto",
+) -> ChatResponse:
     """
     Chat pipeline — answers a specific user question about a document.
 
@@ -266,6 +276,14 @@ def run_chat_pipeline(document_id: str, question: str) -> ChatResponse:
     # Step 2: Build and send LLM prompt
     logger.info("Step 2/2 — Sending context + question to LLM")
 
+    if response_language == "hi":
+        language_instruction = "Respond in Hindi using Devanagari script."
+    else:
+        language_instruction = (
+            "Respond in the same language as the user's question. If the question is in Hindi, "
+            "including Romanized Hindi, answer in Hindi using Devanagari script."
+        )
+
     system_prompt = (
         "You are a legal document assistant.\n"
         "Your job is to answer questions about a specific legal document.\n"
@@ -274,7 +292,8 @@ def run_chat_pipeline(document_id: str, question: str) -> ChatResponse:
         "  - If the answer is not in the provided excerpts, say: "
         "'I cannot find this information in the provided document sections.'\n"
         "  - NEVER make up legal facts, dates, amounts, or names.\n"
-        "  - Keep answers concise and in plain English.\n"
+        f"  - {language_instruction}\n"
+        "  - Keep answers concise and in plain language.\n"
     )
 
     user_prompt = f"""Please answer the following question based ONLY on the document excerpts below.

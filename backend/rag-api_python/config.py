@@ -38,7 +38,8 @@ OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
 # SentenceTransformers (fallback when OpenAI embeddings are disabled)
 # ---------------------------------------------------------------------------
 SENTENCE_TRANSFORMER_MODEL: str = os.getenv(
-    "SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2"
+    "SENTENCE_TRANSFORMER_MODEL",
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
 )
 
 # ---------------------------------------------------------------------------

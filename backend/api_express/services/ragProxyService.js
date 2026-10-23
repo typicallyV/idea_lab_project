@@ -144,7 +144,7 @@ const analyzeDocument = async (documentId, query = 'Summarise this legal documen
  * @param {string} question
  * @returns {Promise<ChatResponse>}
  */
-const chatWithDocument = async (documentId, question) => {
+const chatWithDocument = async (documentId, question, responseLanguage = 'auto') => {
   await ensureDocumentIndexed(documentId);
 
   logger.info(`Chat request for document: ${documentId}`);
@@ -152,7 +152,7 @@ const chatWithDocument = async (documentId, question) => {
   const response = await fetch(`${RAG_BASE_URL}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ document_id: documentId, question })
+    body: JSON.stringify({ document_id: documentId, question, response_language: responseLanguage })
   });
 
   if (!response.ok) {

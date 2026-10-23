@@ -194,6 +194,7 @@ async def chat_with_document(request: ChatRequest):
         result = run_chat_pipeline(
             document_id=request.document_id,
             question=request.question,
+            response_language=request.response_language,
         )
         return result
 

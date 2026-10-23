@@ -34,7 +34,13 @@ import json
 import numpy as np
 import faiss
 from typing import List, Tuple
-from config import FAISS_INDEX_DIR
+from config import (
+    FAISS_INDEX_DIR,
+    OPENAI_EMBEDDING_MODEL,
+    SENTENCE_TRANSFORMER_MODEL,
+    USE_OPENAI_EMBEDDINGS,
+)
+from core.embeddings import embed_texts
 from utils.file_utils import validate_document_id
 from logger import get_logger
 
@@ -54,6 +60,17 @@ def _chunks_path(document_id: str) -> str:
     """Return the file path for the JSON chunk metadata file."""
     validate_document_id(document_id)
     return os.path.join(FAISS_INDEX_DIR, f"{document_id}_chunks.json")
+
+
+def _model_metadata_path(document_id: str) -> str:
+    validate_document_id(document_id)
+    return os.path.join(FAISS_INDEX_DIR, f"{document_id}_model.json")
+
+
+def _active_embedding_model() -> str:
+    if USE_OPENAI_EMBEDDINGS:
+        return f"openai:{OPENAI_EMBEDDING_MODEL}"
+    return f"sentence-transformers:{SENTENCE_TRANSFORMER_MODEL}"
 
 
 def index_exists(document_id: str) -> bool:
@@ -122,6 +139,9 @@ def save_index(
         json.dump(chunks, f, ensure_ascii=False, indent=2)
     logger.debug(f"Chunk metadata written to {_chunks_path(document_id)}")
 
+    with open(_model_metadata_path(document_id), "w", encoding="utf-8") as f:
+        json.dump({"embedding_model": _active_embedding_model()}, f)
+
     logger.info(f"FAISS index saved successfully for document_id='{document_id}'")
 
 
@@ -146,10 +166,27 @@ def load_index(document_id: str) -> Tuple[faiss.Index, List[str]]:
 
     logger.info(f"Loading FAISS index for document_id='{document_id}'")
 
-    index = faiss.read_index(_index_path(document_id))
-
     with open(_chunks_path(document_id), "r", encoding="utf-8") as f:
         chunks = json.load(f)
+
+    metadata_path = _model_metadata_path(document_id)
+    stored_model = None
+    if os.path.exists(metadata_path):
+        try:
+            with open(metadata_path, "r", encoding="utf-8") as f:
+                stored_model = json.load(f).get("embedding_model")
+        except (OSError, json.JSONDecodeError):
+            logger.warning(f"Embedding metadata is unreadable for {document_id}; rebuilding index")
+
+    active_model = _active_embedding_model()
+    if stored_model != active_model:
+        logger.info(
+            f"Re-embedding {len(chunks)} chunks for {document_id} "
+            f"({stored_model or 'legacy index'} -> {active_model})"
+        )
+        save_index(document_id, embed_texts(chunks), chunks)
+
+    index = faiss.read_index(_index_path(document_id))
 
     logger.info(f"FAISS index loaded — {index.ntotal} vectors, {len(chunks)} chunks")
     return index, chunks

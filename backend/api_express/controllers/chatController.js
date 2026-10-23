@@ -19,8 +19,8 @@ const analyzeDoc = async (req, res, next) => {
  */
 const chatWithDoc = async (req, res, next) => {
   try {
-    const { document_id, question } = req.body;
-    const result = await chatService.chatWithDoc(req.userId, document_id, question);
+    const { document_id, question, response_language } = req.body;
+    const result = await chatService.chatWithDoc(req.userId, document_id, question, response_language);
     return res.status(200).json(formatResponse(true, result));
   } catch (error) {
     next(error);
