@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Emits .next/standalone with a minimal server.js — lets the Docker image
-  // run without a full node_modules install.
-  output: "standalone",
+  // Vercel's Next.js 16.3 adapter conflicts with standalone output tracing
+  // during onBuildComplete. Keep standalone output for our Docker image only.
+  output: process.env.VERCEL ? undefined : "standalone",
 };
 
 export default nextConfig;
