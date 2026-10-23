@@ -1,4 +1,4 @@
-# LiveLegal AI ⚖️🤖
+# LiveLegal AI ⚖️
 
 > **Intelligent, Grounded Legal Document Analysis & Conversational Intelligence Platform**  
 > Built for the IDEA LAB project • Hosted at [typicallyV/idea_lab_project](https://github.com/typicallyV/idea_lab_project)
@@ -12,7 +12,7 @@
 
 ---
 
-## 📌 Executive Summary
+##  Executive Summary
 
 **LiveLegal AI** is an enterprise-ready, document-grounded legal assistant and risk analysis platform powered by Retrieval-Augmented Generation (RAG). Designed to bridge the gap between complex legal jargon and rapid decision-making, LiveLegal AI empowers legal practitioners, enterprises, and individuals to dissect intricate contracts, non-disclosure agreements (NDAs), petitions, and regulatory filings in seconds.
 
@@ -20,7 +20,7 @@ Unlike generic chatbots prone to hallucinations, LiveLegal AI guarantees strictl
 
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 - 📑 **Dual-Format Document Ingestion & Parsing**
   - High-precision extraction for `.pdf` and `.docx` legal documents via PyMuPDF/PyPDF and python-docx.
@@ -30,30 +30,30 @@ Unlike generic chatbots prone to hallucinations, LiveLegal AI guarantees strictl
   - Each uploaded legal document maintains its own dedicated vector index, preventing cross-tenant document bleeding and maintaining surgical precision.
   - Sliding-window chunking (500 tokens with 50-token overlap) with normalized vector embeddings (HuggingFace `all-MiniLM-L6-v2` or OpenAI `text-embedding-3-small`).
 
-- ⚖️ **Heuristic & LLM Legal Severity Scoring (0–100)**
+-  **Heuristic & LLM Legal Severity Scoring (0–100)**
   - Rule-based risk engine that flags indemnification clauses, uncapped liabilities, non-compete traps, jurisdiction vulnerabilities, and termination penalties.
   - Categorizes risk into Low (0–30), Moderate (31–70), and Critical (71–100) tiers.
 
-- 💬 **Grounded Multi-Turn Legal Chat with Source Attributions**
+- **Grounded Multi-Turn Legal Chat with Source Attributions**
   - Conversational AI powered by Anthropic Claude 3.5 Sonnet / OpenAI GPT-4o / Google Gemini.
   - Every answer includes verbatim excerpts, chunk coordinates, and clause references from the original contract.
 
-- 📄 **Executive PDF Briefing Report Generation**
+-  **Executive PDF Briefing Report Generation**
   - Server-side PDF generation engine powered by PDFKit.
   - Automatically compiles key terms, obligations, identified risks, and AI recommendations into downloadable, presentation-ready legal memos.
 
-- 🛡️ **Production-Hardened Security & Defenses**
+-  **Production-Hardened Security & Defenses**
   - **NoSQL Operator Injection Prevention**: Strict regex validation (`^[A-Za-z0-9_-]{1,64}$`) on all document identifiers at route and repository layers.
   - **Path Traversal Shield**: File operations guarded against directory traversal attempts (`../../etc/passwd`).
   - **Dual Authentication**: NextAuth session gateway with Google OAuth SSO + Express bcrypt JWT verification (12 rounds) with IP rate limiting.
   - **Zero Public Exposure for RAG**: Python microservice stays isolated inside an internal Docker bridge network without direct host port exposure.
 
-- 🎓 **Viva Voce & Technical Defense Blueprint**
+-  **Viva Voce & Technical Defense Blueprint**
   - Comes bundled with an automated 2-pass ReportLab PDF generation blueprint (`generate_viva_guide.py`) producing the complete examination preparation manual (`LiveLegalAI_Viva_Preparation_Guide.pdf`).
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```
                                       [ HTTPS / Port 443 ]
@@ -92,7 +92,7 @@ Unlike generic chatbots prone to hallucinations, LiveLegal AI guarantees strictl
 
 ---
 
-## 📁 Repository Structure
+##  Repository Structure
 
 ```tree
 LiveLegalAI/
@@ -154,7 +154,7 @@ LiveLegalAI/
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 | Layer | Technologies |
 | :--- | :--- |
@@ -167,7 +167,7 @@ LiveLegalAI/
 
 ---
 
-## 🚀 Quick Start & Installation
+##  Quick Start & Installation
 
 You can run LiveLegal AI either via **Docker Compose** (recommended for production and all-in-one testing) or by running each microservice independently in **Local Development Mode**.
 
@@ -269,7 +269,7 @@ npm run dev
 
 ---
 
-## 📡 API Reference
+##  API Reference
 
 ### Express API Gateway (`/api/*`)
 
@@ -299,7 +299,7 @@ npm run dev
 
 ---
 
-## 🔒 Security Architecture Highlights
+##  Security Architecture Highlights
 
 As documented in [Decisions.md](./Decisions.md):
 1. **Zero-Trust Network Perimeter**: In production Docker deployments, the Python RAG microservice is strictly non-routable from the public internet. Only the internal Express backend can invoke it.
@@ -309,11 +309,11 @@ As documented in [Decisions.md](./Decisions.md):
 
 ---
 
-## 🎓 Academic Defense & Viva Voce Blueprint
+##  Academic Defense & Viva Voce Blueprint
 
 This repository includes a dedicated viva examination and presentation preparation guide:
-- 📜 **`generate_viva_guide.py`**: A standalone Python script utilizing ReportLab to generate a publication-quality examination blueprint with custom page canvas numbering, risk flowcharts, architecture tables, and expected defense questions.
-- 📘 **`LiveLegalAI_Viva_Preparation_Guide.pdf`**: The compiled, comprehensive viva preparation guide ready for academic defense and committee evaluation.
+-  **`generate_viva_guide.py`**: A standalone Python script utilizing ReportLab to generate a publication-quality examination blueprint with custom page canvas numbering, risk flowcharts, architecture tables, and expected defense questions.
+-  **`LiveLegalAI_Viva_Preparation_Guide.pdf`**: The compiled, comprehensive viva preparation guide ready for academic defense and committee evaluation.
 
 To recompile the PDF guide:
 ```bash
@@ -323,7 +323,7 @@ python generate_viva_guide.py
 
 ---
 
-## 🤝 Contributing & License
+##  Contributing & License
 
 Developed with passion for **IDEA LAB**. Contributions, issues, and feature requests are welcome!
 
