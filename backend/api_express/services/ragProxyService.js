@@ -3,12 +3,61 @@ const fs = require('fs');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const { findDocumentByDocumentId } = require('../repositories/documentRepository');
 const logger = require('../utils/logger');
+const cloudinary = require('../config/cloudinary');
 
 const RAW_URL = process.env.RAG_SERVICE_URL;
 const RAG_BASE_URL = RAW_URL.endsWith('/') ? RAW_URL.slice(0, -1) : RAW_URL;
 const INTERNAL_API_HEADERS = process.env.INTERNAL_API_KEY
   ? { 'x-internal-api-key': process.env.INTERNAL_API_KEY }
   : {};
+
+const downloadCloudinaryDocument = async (docMongo) => {
+  const fileResponse = await fetch(docMongo.fileUrl);
+  if (fileResponse.ok) {
+    return Buffer.from(await fileResponse.arrayBuffer());
+  }
+
+  // Private/restricted Cloudinary assets reject their ordinary delivery URL.
+  // Generate a short-lived server-side download URL from the stored public ID.
+  if (![401, 403].includes(fileResponse.status) || !docMongo.cloudinaryPublicId) {
+    throw new Error(`Failed to download document from Cloudinary: ${fileResponse.statusText}`);
+  }
+
+  const path = require('path');
+  const extension = path.extname(docMongo.originalName || '').slice(1).toLowerCase();
+  if (!extension) {
+    throw new Error('Cannot create signed Cloudinary download URL: document format is unknown.');
+  }
+
+  let resourceType = 'raw';
+  let deliveryType = 'upload';
+  try {
+    const urlPath = new URL(docMongo.fileUrl).pathname;
+    const match = urlPath.match(/\/(image|video|raw)\/(upload|private|authenticated)\//);
+    if (match) {
+      resourceType = match[1];
+      deliveryType = match[2];
+    }
+  } catch (_) {
+    // The initial request already validated this URL; use the PDF-safe defaults.
+  }
+
+  const signedUrl = cloudinary.utils.private_download_url(
+    docMongo.cloudinaryPublicId,
+    extension,
+    {
+      resource_type: resourceType,
+      type: deliveryType,
+      expires_at: Math.floor(Date.now() / 1000) + 300,
+      attachment: true,
+    },
+  );
+  const signedResponse = await fetch(signedUrl);
+  if (!signedResponse.ok) {
+    throw new Error(`Cloudinary signed download failed: ${signedResponse.status} ${signedResponse.statusText}`);
+  }
+  return Buffer.from(await signedResponse.arrayBuffer());
+};
 
 /**
  * Ensures that a document is indexed in the RAG service.
@@ -35,11 +84,7 @@ const ensureDocumentIndexed = async (documentId) => {
       let fileBuffer;
       if (docMongo.fileUrl && (docMongo.fileUrl.startsWith('http://') || docMongo.fileUrl.startsWith('https://'))) {
         logger.info(`Downloading original document file from Cloudinary: ${docMongo.originalName}`);
-        const fileResponse = await fetch(docMongo.fileUrl);
-        if (!fileResponse.ok) {
-          throw new Error(`Failed to download document from Cloudinary: ${fileResponse.statusText}`);
-        }
-        fileBuffer = Buffer.from(await fileResponse.arrayBuffer());
+        fileBuffer = await downloadCloudinaryDocument(docMongo);
       } else if (docMongo.fileUrl) {
         // Fallback: Check local uploads directory for legacy files
         const path = require('path');
