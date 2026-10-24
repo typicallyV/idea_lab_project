@@ -23,8 +23,11 @@ CLAUDE_MODEL: str = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
 # Google Gemini
 # ---------------------------------------------------------------------------
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-# Note: Using gemini-2.5-flash (or gemini-2.0-flash-lite-preview-02-05) based on your API key
-GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+# Keep the default aligned with the model recommended by the live API error.
+# Migrate previously deployed defaults that this account was told are unavailable.
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
+if GEMINI_MODEL in {"gemini-2.5-flash", "gemini-3.5-flash-lite"}:
+    GEMINI_MODEL = "gemini-3.8-flash"
 
 # ---------------------------------------------------------------------------
 # OpenAI (used for embeddings if USE_OPENAI_EMBEDDINGS=true)
@@ -33,7 +36,10 @@ OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 USE_OPENAI_EMBEDDINGS: bool = os.getenv("USE_OPENAI_EMBEDDINGS", "false").lower() == "true"
 OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
-USE_GEMINI_EMBEDDINGS: bool = os.getenv("USE_GEMINI_EMBEDDINGS", "false").lower() == "true"
+_GEMINI_EMBEDDINGS_DEFAULT = "true" if GEMINI_API_KEY and not USE_OPENAI_EMBEDDINGS else "false"
+USE_GEMINI_EMBEDDINGS: bool = os.getenv(
+    "USE_GEMINI_EMBEDDINGS", _GEMINI_EMBEDDINGS_DEFAULT
+).lower() == "true"
 GEMINI_EMBEDDING_MODEL: str = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
 GEMINI_EMBEDDING_DIMENSIONS: int = int(os.getenv("GEMINI_EMBEDDING_DIMENSIONS", "768"))
 

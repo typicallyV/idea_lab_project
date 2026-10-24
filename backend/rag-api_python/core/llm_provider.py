@@ -3,10 +3,8 @@ core/llm_provider.py
 --------------------
 Unified interface for LLM completion requests.
 
-Implements sequential fallback routing:
-  1. Claude (Anthropic) - Default
-  2. OpenAI (GPT) - Secondary fallback (if key configured)
-  3. Gemini (Google) - Final fallback
+Implements sequential fallback routing, preferring Gemini because it is the
+configured provider for this deployment and OpenAI currently has no credits.
 
 Handles rate limit, connection, and API errors gracefully, falling back to the next available provider.
 """
@@ -154,42 +152,27 @@ def _call_gemini(system_prompt: str, user_prompt: str, max_tokens: int) -> Optio
 
 def call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1500) -> str:
     """
-    Unified LLM calling interface with Claude -> OpenAI -> Gemini fallback hierarchy.
+    Try configured providers in deployment-friendly order: Gemini, Claude, OpenAI.
+    This avoids spending time on the known exhausted OpenAI account before the
+    working Gemini provider is attempted.
     """
     errors = []
 
-    # Step 1: Default to Claude
-    try:
-        if ANTHROPIC_API_KEY:
-            return _call_claude(system_prompt, user_prompt, max_tokens)
-        else:
-            errors.append("Claude skipped: ANTHROPIC_API_KEY is missing.")
-    except Exception as e:
-        err_msg = f"Claude call failed: {str(e)}"
-        logger.warning(err_msg)
-        errors.append(err_msg)
-
-    # Step 2: Fallback to OpenAI
-    try:
-        if OPENAI_API_KEY:
-            return _call_openai(system_prompt, user_prompt, max_tokens)
-        else:
-            errors.append("OpenAI fallback skipped: OPENAI_API_KEY is missing.")
-    except Exception as e:
-        err_msg = f"OpenAI fallback failed: {str(e)}"
-        logger.warning(err_msg)
-        errors.append(err_msg)
-
-    # Step 3: Fallback to Gemini
-    try:
-        if GEMINI_API_KEY:
-            return _call_gemini(system_prompt, user_prompt, max_tokens)
-        else:
-            errors.append("Gemini fallback skipped: GEMINI_API_KEY is missing.")
-    except Exception as e:
-        err_msg = f"Gemini fallback failed: {str(e)}"
-        logger.warning(err_msg)
-        errors.append(err_msg)
+    providers = (
+        ("Gemini", GEMINI_API_KEY, _call_gemini),
+        ("Claude", ANTHROPIC_API_KEY, _call_claude),
+        ("OpenAI", OPENAI_API_KEY, _call_openai),
+    )
+    for name, api_key, call_provider in providers:
+        if not api_key:
+            errors.append(f"{name} skipped: API key is missing.")
+            continue
+        try:
+            return call_provider(system_prompt, user_prompt, max_tokens)
+        except Exception as e:
+            err_msg = f"{name} call failed: {str(e)}"
+            logger.warning(err_msg)
+            errors.append(err_msg)
 
     # If all options failed
     all_errors = "\n".join(errors)

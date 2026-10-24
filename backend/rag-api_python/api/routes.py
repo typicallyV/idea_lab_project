@@ -11,6 +11,7 @@ import time
 import traceback
 from fastapi import APIRouter, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from core.rag_pipeline import run_ingest_pipeline, run_analyze_pipeline, run_chat_pipeline
 from models.request_models import AnalyzeRequest, ChatRequest
@@ -95,7 +96,8 @@ async def ingest_document(
         saved_path = await save_upload_file(file, document_id)
 
         # --- Run the ingestion pipeline ---
-        result = run_ingest_pipeline(
+        result = await run_in_threadpool(
+            run_ingest_pipeline,
             file_path=saved_path,
             document_id=document_id,
             filename=file.filename,
@@ -146,7 +148,8 @@ async def analyze_document(request: AnalyzeRequest):
     logger.info(f"POST /analyze — document_id='{request.document_id}'")
 
     try:
-        result = run_analyze_pipeline(
+        result = await run_in_threadpool(
+            run_analyze_pipeline,
             document_id=request.document_id,
             query=request.query,
         )
@@ -192,7 +195,8 @@ async def chat_with_document(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
     try:
-        result = run_chat_pipeline(
+        result = await run_in_threadpool(
+            run_chat_pipeline,
             document_id=request.document_id,
             question=request.question,
             response_language=request.response_language,
