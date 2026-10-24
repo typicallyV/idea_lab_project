@@ -25,7 +25,7 @@ services:
       context: ./frontend
       args:
         # Inlined into the client bundle at build time — must match DOMAIN.
-        NEXT_PUBLIC_BACKEND_URL: "${NEXT_PUBLIC_BACKEND_URL:-http://localhost:5000}"
+        NEXT_PUBLIC_BACKEND_URL: "${NEXT_PUBLIC_BACKEND_URL:-http://127.0.0.1:5000}"
     restart: unless-stopped
     env_file:
       - ./frontend/.env.local
@@ -45,6 +45,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/api_express/.env
+    environment:
+      RAG_SERVICE_URL: http://rag_service:8000
+      MONGODB_URI: mongodb://mongodb:27017/livelegalai
     expose:
       - "5000"
     ports:
@@ -52,6 +55,24 @@ services:
     depends_on:
       rag_service:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - livelegalai
+
+  mongodb:
+    image: mongo:8
+    restart: unless-stopped
+    expose:
+      - "27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - livelegalai
 
@@ -61,6 +82,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/rag-api_python/.env
+    environment:
+      MASTER_BACKEND_URL: http://backend:5000
     expose:
       - "8000"
     ports:
@@ -80,3 +103,4 @@ volumes:
   caddy_config:
   rag_faiss_indexes:
   rag_uploaded_files:
+  mongodb_data:
