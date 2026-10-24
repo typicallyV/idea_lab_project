@@ -214,6 +214,10 @@ All settings live in `.env` (copy from `.env.example`):
 | `TOP_K_CHUNKS`              | `5`                         | Chunks to retrieve per query                       |
 | `MAX_FILE_SIZE_MB`          | `20`                        | Maximum upload file size                           |
 
+The default RAG Docker image uses Gemini embeddings and does not install PyTorch.
+For offline SentenceTransformers embeddings, install `requirements-local-embeddings.txt`
+and set both remote embedding flags to `false`.
+
 ---
 
 ## Calling from Express.js

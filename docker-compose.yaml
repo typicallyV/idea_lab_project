@@ -25,12 +25,14 @@ services:
       context: ./frontend
       args:
         # Inlined into the client bundle at build time — must match DOMAIN.
-        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+        NEXT_PUBLIC_BACKEND_URL: "${NEXT_PUBLIC_BACKEND_URL:-http://localhost:5000}"
     restart: unless-stopped
     env_file:
       - ./frontend/.env.local
     expose:
       - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -45,6 +47,8 @@ services:
       - ./backend/api_express/.env
     expose:
       - "5000"
+    ports:
+      - "127.0.0.1:5000:5000"
     depends_on:
       rag_service:
         condition: service_healthy
@@ -59,6 +63,8 @@ services:
       - ./backend/rag-api_python/.env
     expose:
       - "8000"
+    ports:
+      - "127.0.0.1:8000:8000"
     volumes:
       - rag_faiss_indexes:/app/faiss_indexes
       - rag_uploaded_files:/app/uploaded_files

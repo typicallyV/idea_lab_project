@@ -24,12 +24,6 @@ pdfplumber==0.11.5           # PDF text extraction (better layout than pypdf)
 python-docx==1.1.2           # DOCX text extraction
 
 # ---------------------------------------------------------------------------
-# Embeddings — SentenceTransformers (local, free, default)
-# ---------------------------------------------------------------------------
-sentence-transformers==3.3.1
-torch==2.6.0                 # Required by sentence-transformers (CPU version)
-
-# ---------------------------------------------------------------------------
 # Embeddings — OpenAI (optional, set USE_OPENAI_EMBEDDINGS=true)
 # ---------------------------------------------------------------------------
 openai==1.59.9

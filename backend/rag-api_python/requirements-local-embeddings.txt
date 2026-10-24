@@ -1,0 +1,4 @@
+# Optional offline multilingual embedding backend.
+# Install only when both remote embedding flags are false.
+sentence-transformers==3.3.1
+torch==2.6.0
