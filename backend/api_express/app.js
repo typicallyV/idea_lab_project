@@ -30,12 +30,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("combined"));
 
-// Health check is registered before the rate limiter and CORS: it's a system
-// endpoint (Docker healthcheck, depends_on gating, uptime monitors), not user
-// traffic, and must stay reachable even if a client is being rate-limited.
-app.get("/health", getHealth);
-
-app.use(globalLimiter);
+// Add CORS headers before rate limiting so browsers can read 429 responses and
+// preflight requests are not consumed by the API limiter.
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -43,6 +39,13 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+// Health check is registered before the rate limiter and CORS: it's a system
+// endpoint (Docker healthcheck, depends_on gating, uptime monitors), not user
+// traffic, and must stay reachable even if a client is being rate-limited.
+app.get("/health", getHealth);
+
+app.use(globalLimiter);
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/document", documentRoutes);

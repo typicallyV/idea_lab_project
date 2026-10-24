@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { getDocumentStatus, uploadDocument } from "@/features/documents/api";
 import type { DocumentStatusPayload } from "@/types/document";
 
-const POLL_INTERVAL_MS = 1000;
+const POLL_INTERVAL_MS = 2000;
 
 export function useUploadDocument() {
   const [progress, setProgress] = useState(0);
@@ -13,11 +13,11 @@ export function useUploadDocument() {
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<DocumentStatusPayload | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
-      clearInterval(pollRef.current);
+      clearTimeout(pollRef.current);
       pollRef.current = null;
     }
   }, []);
@@ -43,9 +43,11 @@ export function useUploadDocument() {
         const { documentId, filename } = await uploadDocument(file);
         console.log("[upload] started", documentId, filename);
 
-        pollRef.current = setInterval(async () => {
+        let transientFailures = 0;
+        const pollStatus = async () => {
           try {
             const status = await getDocumentStatus(documentId);
+            transientFailures = 0;
             console.log("[upload] status", status.status, status.progress + "%");
             setProgress(status.progress);
             setStatusMessage(status.statusMessage);
@@ -60,13 +62,22 @@ export function useUploadDocument() {
               stopPolling();
               setUploading(false);
               setError(status.error || "Processing failed");
+            } else {
+              pollRef.current = setTimeout(pollStatus, POLL_INTERVAL_MS);
             }
           } catch (pollErr) {
-            stopPolling();
-            setUploading(false);
-            setError(pollErr instanceof Error ? pollErr.message : "Status polling error");
+            transientFailures += 1;
+            if (transientFailures <= 4) {
+              setStatusMessage("Connection hiccup. Retrying document status...");
+              pollRef.current = setTimeout(pollStatus, POLL_INTERVAL_MS * transientFailures);
+            } else {
+              stopPolling();
+              setUploading(false);
+              setError(pollErr instanceof Error ? pollErr.message : "Status polling error");
+            }
           }
-        }, POLL_INTERVAL_MS);
+        };
+        pollRef.current = setTimeout(pollStatus, POLL_INTERVAL_MS);
       } catch (err) {
         console.error("[upload] failed", err);
         setUploading(false);

@@ -5,6 +5,7 @@ const { formatResponse } = require('../utils/responseFormatter');
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
+  skip: (req) => req.method === 'GET' && /^\/api\/document\/[^/]+\/status$/.test(req.path),
   standardHeaders: true,
   legacyHeaders: false,
   message: formatResponse(false, null, 'Too many requests, please try again later.'),
@@ -35,8 +36,20 @@ const authLimiter = rateLimit({
   message: formatResponse(false, null, 'Too many auth attempts, please try again later.'),
 });
 
+// Upload status is polled while documents are processing. Give each signed-in
+// user a separate generous bucket so polling cannot exhaust the global API cap.
+const statusLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => req.userId,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: formatResponse(false, null, 'Too many status checks. Please wait a moment.'),
+});
+
 module.exports = {
   globalLimiter,
   heavyOpLimiter,
   authLimiter,
+  statusLimiter,
 };

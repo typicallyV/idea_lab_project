@@ -10,7 +10,7 @@ const {
   downloadReport,
   getDocumentStatus,
 } = require("../controllers/documentController");
-const { heavyOpLimiter } = require("../middleware/rateLimitMiddleware");
+const { heavyOpLimiter, statusLimiter } = require("../middleware/rateLimitMiddleware");
 const { validateDocumentUpload } = require("../validators/documentValidator");
 
 // Authenticated Routes
@@ -29,7 +29,7 @@ router.post(
 router.get("/history", getHistory);
 
 // GET /api/document/:documentId/status
-router.get("/:documentId/status", getDocumentStatus);
+router.get("/:documentId/status", statusLimiter, getDocumentStatus);
 
 // GET /api/document/:id
 router.get("/:id", getDocument);
